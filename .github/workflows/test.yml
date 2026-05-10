@@ -13,12 +13,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y unrar
-          rustup default stable
-
-      - name: Build Rust
-        run: |
-          cargo build --release
-          chmod +x target/release/*
 
       - name: Download
         run: |
@@ -38,16 +32,11 @@ jobs:
       - name: Find scatter
         id: find
         run: |
-          scatter=$(find . -iname "*_scatter.txt" -type f | head -1)
+          scatter=$(find . -iname "*_scatter." -type f | head -1)
           echo "path=$scatter" >> $GITHUB_OUTPUT
-
-      - name: Pack
-        run: |
-          binary=$(find target/release -type f -executable | head -1)
-          "$binary" "${{ steps.find.outputs.path }}"
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: flashable_firmware
-          path: flashable_firmware_*
+          name: scatter
+          path: ${{ steps.find.outputs.path }}
