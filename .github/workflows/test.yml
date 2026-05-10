@@ -2,7 +2,6 @@ name: Build Firmware
 
 on:
   workflow_dispatch:
-  push:
 
 jobs:
   build:
@@ -17,17 +16,28 @@ jobs:
 
       - name: Download
         run: |
-          curl -L -o file.zip "https://pixeldrain.com/api/file/nhdgcMa6?download" --progress-bar 2>&1 | while read line; do
+          curl -L -o downloaded.file "https://pixeldrain.com/api/file/nhdgcMa6?download" --progress-bar 2>&1 | while read line; do
             if [[ "$line" =~ ([0-9]+) ]]; then
               mb=$((${BASH_REMATCH[1]} / 1048576))
               if (( mb >= 500 && mb % 500 < 50 )); then echo "${mb}MB downloaded"; fi
             fi
           done
 
-      - name: Extract
+      - name: Extract if archive
         run: |
-          unzip -q file.zip
-          rm file.zip
+          file downloaded.file
+          if file downloaded.file | grep -q "Zip archive"; then
+            unzip -q downloaded.file
+            rm downloaded.file
+          elif file downloaded.file | grep -q "gzip compressed"; then
+            tar -xzf downloaded.file
+            rm downloaded.file
+          elif file downloaded.file | grep -q "RAR archive"; then
+            unrar x downloaded.file
+            rm downloaded.file
+          else
+            mv downloaded.file ./
+          fi
 
       - name: Find scatter
         id: find
