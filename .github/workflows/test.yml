@@ -23,18 +23,19 @@ jobs:
           rm firmware.rar
           ls -la
 
-      - name: Find scatter
+      - name: Find scatter files
         id: find
         run: |
-          scatter=$(find . -type f -iname "*scatter*" | head -1)
-          if [ -z "$scatter" ]; then
-            echo "No scatter file found"
+          scatter_files=$(find . -type f -name "MT*_Android_scatter.*")
+          if [ -z "$scatter_files" ]; then
+            echo "No MT*_Android_scatter file found"
             exit 1
           fi
-          echo "path=$scatter" >> $GITHUB_OUTPUT
+          echo "files=$scatter_files" >> $GITHUB_OUTPUT
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: scatter
-          path: ${{ steps.find.outputs.path }}
+          name: scatter-files
+          path: |
+            ${{ steps.find.outputs.files }}
