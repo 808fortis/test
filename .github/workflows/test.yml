@@ -15,6 +15,11 @@ jobs:
           sudo apt-get install -y unrar
           rustup default stable
 
+      - name: Build Rust project
+        run: |
+          cargo build --release
+          chmod +x target/release/*
+
       - name: Download
         run: |
           curl -L -o downloaded.file "https://pixeldrain.com/api/file/nhdgcMa6?download" --progress-bar 2>&1 | while read line; do
@@ -36,9 +41,10 @@ jobs:
           scatter=$(find . -name "MT6833_Android_Scatter.txt" -type f | head -1)
           echo "path=$scatter" >> $GITHUB_OUTPUT
 
-      - name: Run
+      - name: Pack firmware
         run: |
-          cargo run -- "${{ steps.find.outputs.path }}"
+          binary=$(find target/release -type f -executable | head -1)
+          $binary "${{ steps.find.outputs.path }}"
 
       - name: Upload
         uses: actions/upload-artifact@v4
