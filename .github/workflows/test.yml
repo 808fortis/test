@@ -9,46 +9,45 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust and unrar
+      - name: Install deps
         run: |
           sudo apt-get update
           sudo apt-get install -y unrar
           rustup default stable
 
-      - name: Build Rust project
+      - name: Build Rust
         run: |
           cargo build --release
           chmod +x target/release/*
 
       - name: Download
         run: |
-          curl -L -o downloaded.file "https://pixeldrain.com/api/file/nhdgcMa6?download" --progress-bar 2>&1 | while read line; do
+          curl -L -o firmware.rar "https://pixeldrain.com/api/file/nhdgcMa6?download" --progress-bar 2>&1 | while read line; do
             if [[ "$line" =~ ([0-9]+) ]]; then
               mb=$((${BASH_REMATCH[1]} / 1048576))
               if (( mb >= 500 && mb % 500 < 50 )); then echo "${mb}MB downloaded"; fi
             fi
           done
-          echo "Downloaded size: $(du -h downloaded.file | cut -f1)"
 
-      - name: Extract RAR
+      - name: Extract
         run: |
-          unrar x downloaded.file
-          rm downloaded.file
+          unrar x firmware.rar
+          rm firmware.rar
+          ls -la
 
       - name: Find scatter
         id: find
         run: |
-          scatter=$(find . -name "MT6833_Android_Scatter.txt" -type f | head -1)
+          scatter=$(find . -iname "*_scatter.txt" -type f | head -1)
           echo "path=$scatter" >> $GITHUB_OUTPUT
 
-      - name: Pack firmware
+      - name: Pack
         run: |
           binary=$(find target/release -type f -executable | head -1)
-          $binary "${{ steps.find.outputs.path }}"
+          "$binary" "${{ steps.find.outputs.path }}"
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: flashable_firmware
-          path: |
-            flashable_firmware_*
+          path: flashable_firmware_*
