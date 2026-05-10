@@ -1,24 +1,47 @@
-name: Download
+name: Build Firmware
 
 on:
   workflow_dispatch:
   push:
 
 jobs:
-  download:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Download file with progress logging
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Download
         run: |
-          url="https://pixeldrain.com/api/file/nhdgcMa6?download"
-          output="downloaded_file"
-          curl -L -o "$output" "$url" --progress-bar 2>&1 | while read -r line; do
+          curl -L -o file.zip "https://pixeldrain.com/api/file/nhdgcMa6?download" --progress-bar 2>&1 | while read line; do
             if [[ "$line" =~ ([0-9]+) ]]; then
-              bytes="${BASH_REMATCH[1]}"
-              mb=$((bytes / 1048576))
-              if (( mb >= 500 && mb % 500 < 50 )); then
-                echo "Downloaded: ${mb}MB"
-              fi
+              mb=$((${BASH_REMATCH[1]} / 1048576))
+              if (( mb >= 500 && mb % 500 < 50 )); then echo "${mb}MB downloaded"; fi
             fi
           done
-          echo "Download complete: $(du -h "$output" | cut -f1)"
+
+      - name: Extract
+        run: |
+          unzip -q file.zip
+          rm file.zip
+
+      - name: Find scatter
+        id: find
+        run: |
+          scatter=$(find . -name "MT6833_Android_Scatter.txt" -type f | head -1)
+          echo "path=$scatter" >> $GITHUB_OUTPUT
+
+      - name: Run
+        run: |
+          cargo run -- "${{ steps.find.outputs.path }}"
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: flashable_firmware
+          path: |
+            flashable_firmware_*
