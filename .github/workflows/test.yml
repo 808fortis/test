@@ -9,10 +9,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - name: Install Rust and unrar
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unrar
+          rustup default stable
 
       - name: Download
         run: |
@@ -22,22 +23,12 @@ jobs:
               if (( mb >= 500 && mb % 500 < 50 )); then echo "${mb}MB downloaded"; fi
             fi
           done
+          echo "Downloaded size: $(du -h downloaded.file | cut -f1)"
 
-      - name: Extract if archive
+      - name: Extract RAR
         run: |
-          file downloaded.file
-          if file downloaded.file | grep -q "Zip archive"; then
-            unzip -q downloaded.file
-            rm downloaded.file
-          elif file downloaded.file | grep -q "gzip compressed"; then
-            tar -xzf downloaded.file
-            rm downloaded.file
-          elif file downloaded.file | grep -q "RAR archive"; then
-            unrar x downloaded.file
-            rm downloaded.file
-          else
-            mv downloaded.file ./
-          fi
+          unrar x downloaded.file
+          rm downloaded.file
 
       - name: Find scatter
         id: find
