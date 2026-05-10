@@ -15,13 +15,7 @@ jobs:
           sudo apt-get install -y unrar
 
       - name: Download
-        run: |
-          curl -L -o firmware.rar "https://pixeldrain.com/api/file/nhdgcMa6?download" --progress-bar 2>&1 | while read line; do
-            if [[ "$line" =~ ([0-9]+) ]]; then
-              mb=$((${BASH_REMATCH[1]} / 1048576))
-              if (( mb >= 500 && mb % 500 < 50 )); then echo "${mb}MB downloaded"; fi
-            fi
-          done
+        run: curl -L --progress-bar -o firmware.rar "https://pixeldrain.com/api/file/nhdgcMa6?download"
 
       - name: Extract
         run: |
@@ -32,7 +26,11 @@ jobs:
       - name: Find scatter
         id: find
         run: |
-          scatter=$(find . -iname "*_scatter." -type f | head -1)
+          scatter=$(find . -type f -iname "*scatter*" | head -1)
+          if [ -z "$scatter" ]; then
+            echo "No scatter file found"
+            exit 1
+          fi
           echo "path=$scatter" >> $GITHUB_OUTPUT
 
       - name: Upload
