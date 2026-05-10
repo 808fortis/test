@@ -5,14 +5,19 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 struct Partition {
+    #[allow(dead_code)]
     index: String,
     name: String,
     file_name: String,
     is_download: String,
+    #[allow(dead_code)]
     partition_type: String,
+    #[allow(dead_code)]
     linear_start_addr: String,
+    #[allow(dead_code)]
     physical_start_addr: String,
     partition_size: u64,
+    #[allow(dead_code)]
     region: String,
 }
 
@@ -274,12 +279,22 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     
     let scatter_path = if args.len() > 1 {
-        PathBuf::from(&args[1])
+        let path = PathBuf::from(&args[1]);
+        if args[1].is_empty() {
+            eprintln!("error: empty filename provided");
+            std::process::exit(1);
+        }
+        path
     } else {
         match find_scatter_file() {
             Some(path) => path,
             None => {
+                eprintln!("Flashable Firmware Creator");
+                eprintln!("");
                 eprintln!("usage: {} <MTxxx_Android_Scatter.txt>", args[0]);
+                eprintln!("");
+                eprintln!("Or place scatter file in current directory");
+                eprintln!("File must end with: _Android_Scatter.txt");
                 std::process::exit(1);
             }
         }
@@ -308,6 +323,13 @@ fn main() {
     
     if flashable.is_empty() {
         eprintln!("error: no flashable partitions found");
+        eprintln!("");
+        eprintln!("requirements:");
+        eprintln!("  - partition name not 'preloader'");
+        eprintln!("  - is_download = true");
+        eprintln!("  - file_name not empty or 'NONE'");
+        eprintln!("  - image file exists");
+        eprintln!("  - image size <= partition size");
         std::process::exit(1);
     }
     
@@ -354,4 +376,4 @@ fn main() {
         writeln!(list, "    status: {}", res.message).unwrap();
     }
     eprintln!("list: {}", list_file);
-  }
+}
