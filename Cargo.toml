@@ -1,0 +1,20 @@
+[package]
+name = "flashable-fw"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[[bin]]
+name = "flashable-fw"
+path = "src/main.rs"
